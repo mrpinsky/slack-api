@@ -29,6 +29,7 @@ type Domain = Text
 
 data Event where
   Hello :: Event
+  Goodbye :: Event
   Message :: ChannelId -> Submitter -> Text -> SlackTimeStamp -> Maybe Subtype -> Maybe Edited -> Event
   HiddenMessage :: ChannelId -> Submitter -> SlackTimeStamp -> Maybe Subtype -> Event
   ChannelMarked :: ChannelId -> SlackTimeStamp -> Event
@@ -40,6 +41,7 @@ data Event where
   ChannelArchive :: ChannelId -> UserId -> Event
   ChannelUnarchive :: ChannelId -> UserId -> Event
   ChannelHistoryChanged :: SlackTimeStamp -> SlackTimeStamp -> SlackTimeStamp -> Event
+  DndUpdatedUser :: UserId -> DndStatus -> Event
   ImCreated :: UserId -> IM -> Event
   ImOpen :: UserId -> IMId -> Event
   ImClose :: UserId -> IMId -> Event
@@ -54,6 +56,7 @@ data Event where
   GroupRename :: ChannelRenameInfo -> Event
   GroupMarked :: ChannelId -> SlackTimeStamp -> Event
   GroupHistoryChanged :: SlackTimeStamp -> SlackTimeStamp -> SlackTimeStamp -> Event
+  GroupDeleted :: ChannelId -> Event
   FileCreated :: File -> Event
   FileShared :: FileReference -> Event
   FileUnshared :: File -> Event
@@ -66,15 +69,18 @@ data Event where
   FileCommentDeleted :: File -> CommentId -> Event
   PresenceChange :: UserId -> Presence -> Event
   ManualPresenceChange :: Presence -> Event
+  MemberJoinedChannel :: UserId -> ChannelId -> ChannelType -> TeamId -> Maybe UserId -> Event
+  MemberLeftChannel :: UserId -> ChannelId -> ChannelType -> TeamId -> Event
   PrefChange :: Pref -> Event
   UserChange :: User -> Event
-  TeamJoin :: User -> Event
   ReactionAdded :: UserId -> Text -> UserId {- item author -} -> EmbeddedItem -> SlackTimeStamp -> Event
   ReactionRemoved :: UserId -> Maybe Text -> EmbeddedItem -> SlackTimeStamp -> Event
   StarAdded :: UserId -> Item -> SlackTimeStamp -> Event
   StarRemoved :: UserId -> Item -> SlackTimeStamp -> Event
+  SubteamCreated :: SubteamInfo -> Event
   EmojiChanged :: SlackTimeStamp -> Event
   CommandsChanged :: SlackTimeStamp -> Event
+  TeamJoin :: User -> Event
   TeamPrefChange :: Pref -> Event
   TeamRenameEvent :: Text -> Event
   TeamDomainChange :: URL -> Domain -> Event
@@ -116,6 +122,7 @@ parseType :: Value -> Text -> Parser Event
 parseType o@(Object v) typ =
     case typ of
       "hello" -> return Hello
+      "goodbye" -> return Goodbye
 
       "message" -> do
         subt <- (\case
@@ -124,7 +131,7 @@ parseType o@(Object v) typ =
         submitter <- case subt of
                       Just (SBotMessage bid _ _) -> return $ BotComment bid
                       _ -> maybe System UserComment <$> v .:? "user"
-        void $ (v .: "channel" :: Parser ChannelId)
+        void (v .: "channel" :: Parser ChannelId)
         hidden <- (\case {Just True -> True; _ -> False}) <$> v .:? "hidden"
         if not hidden
           then Message <$>  v .: "channel" <*> pure submitter  <*> v .: "text" <*> v .: "ts" <*> pure subt <*> v .:? "edited"
@@ -140,6 +147,7 @@ parseType o@(Object v) typ =
       "channel_archive" -> ChannelArchive <$> v .: "channel" <*> v .: "user"
       "channel_unarchive" -> ChannelUnarchive <$> v .: "channel" <*> v .: "user"
       "channel_history_changed" -> ChannelHistoryChanged <$> v .: "latest" <*> v .: "ts" <*> v .: "event_ts"
+      "dnd_updated_user" -> DndUpdatedUser <$> v .: "user" <*> v .: "dnd_status"
       "im_open"     -> ImOpen <$> v .: "user" <*> v .: "channel"
       "im_created" -> ImCreated <$> v .: "user" <*> v .: "channel"
       "im_close" -> ImClose <$> v .: "user" <*> v .: "channel"
@@ -154,6 +162,7 @@ parseType o@(Object v) typ =
       "group_rename" -> GroupRename <$> v .: "channel"
       "group_marked" -> GroupMarked <$> v .: "channel" <*> v .: "ts"
       "group_history_changed" -> GroupHistoryChanged <$> v .: "latest" <*> v .: "ts" <*> v .: "event_ts"
+      "group_deleted" -> GroupDeleted <$> v.: "channel"
       "file_created" -> FileCreated <$> v .: "file"
       "file_shared"  -> FileShared <$> v .: "file"
       "file_unshared" -> FileUnshared <$> v .: "file"
@@ -165,6 +174,8 @@ parseType o@(Object v) typ =
       "file_comment_edited" -> FileCommentEdited <$> v .: "file" <*> v .: "comment"
       "file_comment_deleted" -> FileCommentDeleted <$> v .: "file" <*> v .: "comment"
       "manual_presence_change" -> ManualPresenceChange <$> v .: "presence"
+      "member_joined_channel" -> MemberJoinedChannel <$> v .: "user" <*> v .: "channel" <*> v .: "channel_type" <*> v .: "team" <*> v .:? "inviter"
+      "member_left_channel" -> MemberLeftChannel <$> v .: "user" <*> v .: "channel" <*> v .: "channel_type" <*> v .: "team"
       "pref_change" -> curry PrefChange <$> v .: "name" <*> v .: "value"
       "user_change" -> UserChange <$> v .: "user"
       "team_join"   -> TeamJoin <$> v .: "user"
@@ -172,6 +183,8 @@ parseType o@(Object v) typ =
       "reaction_removed" -> ReactionRemoved <$> v .: "user" <*> v .:? "name" <*> v .: "item" <*> v .: "event_ts"
       "star_added" ->  StarAdded <$> v .: "user" <*> v .: "item" <*> v .: "event_ts"
       "star_removed" -> StarRemoved <$> v .: "user" <*> v .: "item" <*> v .: "event_ts"
+      "subteam_created" -> SubteamCreated <$> v .: "subteam"
+      "subteam_updated" -> SubteamUpdated <$> v .: "subteam"
       "emoji_changed" -> EmojiChanged <$> v .: "event_ts"
       "commands_changed" -> CommandsChanged <$> v .: "event_ts"
       "team_pref_change" -> curry TeamPrefChange <$> v .: "name" <*> v .: "value"
@@ -202,6 +215,68 @@ makeLenses ''ChannelRenameInfo
 
 instance FromJSON ChannelRenameInfo where
   parseJSON = withObject "ChannelRenameInfo" (\o -> ChannelRenameInfo <$> o .: "id" <*> o .: "name" <*> o .: "created")
+
+data ChannelType = Public | Private deriving (Show, Eq)
+
+instance FromJSON ChannelType where
+  parseJSON = withText "ChannelType" $ \case
+    "C" -> Public
+    "G" -> Private
+
+data DndStatus = DndStatus
+               { _dndEnabled   :: Bool
+               , _nextDndStart :: Time
+               , _nextDndEnd   :: Time
+               } deriving Show
+
+makeLenses ''DndStatus
+
+instance FromJSON DndStatus where
+  parseJSON = withObject "DndStatus" (\o -> DndStatus <$> o .: "dnd_enabled" <*> o .: "next_dnd_start_ts" <*> o .: "next_dnd_end_ts")
+
+data SubteamInfo = Subteam
+                 { _id :: SubteamId
+                 , _teamId :: TeamId
+                 , _isUserGroup :: Bool
+                 , _name :: Text
+                 , _description :: Text
+                 , _handle :: Text
+                 , _autoType :: Text
+                 , _dateCreated :: Time
+                 , _dateUpdated :: Time
+                 , _dateDeleted :: Maybe Time
+                 , _createdBy :: UserId
+                 , _updatedBy :: UserId
+                 , _deletedBy :: Maybe UserId
+                 , _prefs :: SubteamPrefs
+                 , _users :: [UserId]
+                 , _userCount :: Int
+                 } deriving Show
+
+makeLenses ''SubteamInfo
+
+parseSubteamInfo :: Object -> Parser SubteamInfo
+parseSubteamInfo o =
+    Subteam <$> o .: "id"
+    <*> o .: "team_id"
+    <*> o .: "is_usergroup"
+    <*> o .: "name"
+    <*> o .: "description"
+    <*> o .: "handle"
+    <*> o .: "is_external"
+    <*> o .: "auto_type"
+    <*> o .: "date_create"
+    <*> o .: "date_update"
+    <*> o .:? "date_delete" -- ???
+    <*> o .: "created_by"
+    <*> o .: "updated_by"
+    <*> o .:? "deleted_by" -- ???
+    <*> o .: "prefs"
+    <*> o .: "users"
+    <*> o .: "user_count" -- ???
+
+instance FromJSON SubteamInfo where
+  parseJSON = withObject "Subteam" parseSubteamInfo
 
 
 makePrisms ''Event

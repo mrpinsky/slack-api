@@ -1,0 +1,42 @@
+%%%%%%%%%%%%%%%%%%%
+%% MESSAGE TYPES %%
+%%%%%%%%%%%%%%%%%%%
+
+-file_private
+subteam_created
+subteam_updated
+subteam_members_changed
+subteam_self_added
+subteam_self_removed
+-status_change
+team_profile_change
+team_profile_delete
+team_profile_reorder
+
+%%%%%%%%%%%%%%%%%%%%%%
+%% SUBMESSAGE TYPES %%
+%%%%%%%%%%%%%%%%%%%%%%
+
+message_replied
+thread_broadcast
+
+%% ERRORS FROM PRODUCTION %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+{"type":"user_change","user":{"id":"U42NMUGJX","team_id":"T02917STN","name":"natevick","color":"c386df","is_bot":false,"tz":"America\/Los_Angeles","tz_label":"Pacific Daylight Time","tz_offset":-25200,"profile":{"avatar_hash":"3d4f279427c6","image_original":"https:\/\/avatars.slack-edge.com\/2018-04-29\/356551231815_3d4f279427c68af48f24_original.png","image_24":"https:\/\/avatars.slack-edge.com\/2018-04-29\/356551231815_3d4f279427c68af48f24_24.png","image_32":"https:\/\/avatars.slack-edge.com\/2018-04-29\/356551231815_3d4f279427c68af48f24_32.png","image_48":"https:\/\/avatars.slack-edge.com\/2018-04-29\/356551231815_3d4f279427c68af48f24_48.png","image_72":"https:\/\/avatars.slack-edge.com\/2018-04-29\/356551231815_3d4f279427c68af48f24_72.png","image_192":"https:\/\/avatars.slack-edge.com\/2018-04-29\/356551231815_3d4f279427c68af48f24_192.png","image_512":"https:\/\/avatars.slack-edge.com\/2018-04-29\/356551231815_3d4f279427c68af48f24_512.png","image_1024":"https:\/\/avatars.slack-edge.com\/2018-04-29\/356551231815_3d4f279427c68af48f24_1024.png","email":"nate.vick@hint.io","first_name":"Nate","last_name":"Vick","real_name":"Nate Vick","display_name":"natevick","real_name_normalized":"Nate Vick","display_name_normalized":"natevick","team":"T02917STN"},"updated":1532626555,"is_app_user":false},"cache_ts":1532626555,"channel":"C9MPTCF2A","event_ts":"1532626555.000325"}
+Error in $.user: failed to parse field user: key "deleted" not present
+
+{"type":"message","message":{"type":"message","user":"U9W7C63EX","text":":cookie: Chocolate chip cookies have returned and they are located in the kitchen.  Happy Friday eve :slightly_smiling_face:","client_msg_id":"06b72be8-e9a8-4ec2-9994-6ba6f61f2d8a","thread_ts":"1532620514.000238","reply_count":16,"replies":[{"user":"U6YEUSY1H","ts":"1532620568.000135"},{"user":"U6YEUSY1H","ts":"1532620591.000479"},{"user":"U9NKNEG2Z","ts":"1532620715.000531"},{"user":"U9W7C63EX","ts":"1532620761.000296"},{"user":"U9NKNEG2Z","ts":"1532620864.000239"},{"user":"U9NKNEG2Z","ts":"1532620894.000170"},{"user":"U9W7C63EX","ts":"1532620952.000397"},{"user":"U8CUJRP9S","ts":"1532621382.000382"},{"user":"U6YEUSY1H","ts":"1532621780.000040"},{"user":"U6YEUSY1H","ts":"1532621873.000207"},{"user":"U6YEUSY1H","ts":"1532621876.000558"},{"user":"U14BTM64V","ts":"1532621966.000318"},{"user":"U9NKNEG2Z","ts":"1532622630.000136"},{"user":"UBDNU7E66","ts":"1532623003.000446"},{"user":"U6X01ECLE","ts":"1532624091.000361"},{"user":"U9W7C63EX","ts":"1532624782.000357"}],"unread_count":16,"ts":"1532620514.000238"},"subtype":"message_replied","hidden":true,"channel":"C6VBQMC80","event_ts":"1532624782.000372","ts":"1532624782.000372"}
+Error in $: Unrecognised subtype: message_replied
+
+Object (fromList [("dnd_status",Object (fromList [("next_dnd_end_ts",Number 1.0),("dnd_enabled",Bool False),("next_dnd_start_ts",Number 1.0)])),("user",String "U8WLUKU3D"),("event_ts",String "1532623473.000130"),("type",String "dnd_updated_user")])
+Failed to parse to a known event
+
+Object (fromList [("ts",String "1532623125.000037"),("inviter",String "U7PSH1259"),("channel",String "C7Q8FEXK7"),("user",String "U702K1WDU"),("event_ts",String "1532623125.000037"),("channel_type",String "C"),("team",String "T0WK7H33K"),("type",String "member_joined_channel")])
+Failed to parse to a known event
+
+Object (fromList [("ts",String "1532623127.000508"),("channel",String "C6WGR7YUT"),("user",String "U6W5CLHGC"),("event_ts",String "1532623127.000508"),("channel_type",String "C"),("team",String "T0WK7H33K"),("type",String "member_left_channel")])
+Failed to parse to a known event
+
+{"type":"file_change","file_id":"FBYTUL8EA","user_id":"U6YEUSY1H","file":{"id":"FBYTUL8EA"},"event_ts":"1532622613.000501"}
+Error in $.file: failed to parse field file: key "timestamp" not present
